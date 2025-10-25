@@ -7,12 +7,16 @@
     "dev": "netlify dev",
     "build": "echo 'No build step required'"
   },
-  "keywords": ["ai", "video", "prompt", "gemini"],
+  "keywords": [
+    "ai",
+    "video",
+    "prompt",
+    "gemini"
+  ],
   "author": "Studio JU",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
+    "@google/generative-ai": "^0.24.1",
     "node-fetch": "^2.6.7"
   }
 }
-
