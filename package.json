@@ -11,6 +11,7 @@
   "author": "Studio JU",
   "license": "MIT",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "node-fetch": "^2.6.7"
   }
 }
