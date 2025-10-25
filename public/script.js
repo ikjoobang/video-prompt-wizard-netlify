@@ -1,32 +1,5 @@
 // public/script.js
-// Updated for Netlify Functions with individual prompt cards
-
-let videoPromptSystem = null;
-let allToolsSchema = null;
-
-// Initialize system on page load
-async function initializeSystem() {
-    try {
-        // Load system data from Netlify Functions
-        const videoSystemResponse = await fetch('/.netlify/functions/video-prompt-system');
-        videoPromptSystem = await videoSystemResponse.json();
-        
-        const toolsSchemaResponse = await fetch('/.netlify/functions/all-tools-schema');
-        allToolsSchema = await toolsSchemaResponse.json();
-        
-        console.log('시스템 초기화 완료');
-        console.log('Video Prompt System:', videoPromptSystem);
-        console.log('All Tools Schema:', allToolsSchema);
-        
-        // Remove error message if exists
-        const errorMessages = document.querySelectorAll('.system-info');
-        errorMessages.forEach(msg => msg.parentElement.remove());
-        
-    } catch (error) {
-        console.error('시스템 초기화 실패:', error);
-        addAIMessage('시스템 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
-    }
-}
+// Simplified version for Netlify Functions with individual prompt cards
 
 // Add AI message to chat
 function addAIMessage(text) {
@@ -146,7 +119,9 @@ async function generatePrompt(userMessage, mode = 'creation') {
         });
         
         if (!response.ok) {
-            throw new Error('프롬프트 생성 실패');
+            const errorData = await response.json();
+            console.error('Server error:', errorData);
+            throw new Error(errorData.message || '프롬프트 생성 실패');
         }
         
         const data = await response.json();
@@ -168,7 +143,7 @@ async function generatePrompt(userMessage, mode = 'creation') {
     } catch (error) {
         console.error('프롬프트 생성 오류:', error);
         removeLoadingMessage();
-        addAIMessage('프롬프트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+        addAIMessage(`프롬프트 생성 중 오류가 발생했습니다: ${error.message}`);
     }
 }
 
@@ -199,8 +174,6 @@ async function handleSend() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    initializeSystem();
-    
     const sendButton = document.getElementById('sendButton');
     const userInput = document.getElementById('userInput');
     
@@ -212,5 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
             handleSend();
         }
     });
+    
+    // Show welcome message
+    addAIMessage('안녕하세요! 👋<br><br>어떤 영상 프롬프트를 만들어드릴까요?<br>간단한 아이디어만 말씀해주세요. 전문가급 프롬프트로 변환해드립니다.');
 });
 
