@@ -1,0 +1,17 @@
+{
+  "name": "video-prompt-wizard-netlify",
+  "version": "1.0.0",
+  "description": "AI Video Prompt Wizard with Netlify Functions and Gemini API",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'"
+  },
+  "keywords": ["ai", "video", "prompt", "gemini"],
+  "author": "Studio JU",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
+
