@@ -52,7 +52,7 @@ exports.handler = async (event) => {
         for (const apiKey of apiKeys) {
             try {
                 const genAI = new GoogleGenerativeAI(apiKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
                 const systemPrompt = `당신은 VEO 3, VEO 3.1, SORA 2, SORA 2 Pro 등 최신 AI 영상 생성 도구를 위한 전문 프롬프트 작성자입니다.
 
