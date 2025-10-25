@@ -1,5 +1,5 @@
-// AI Video Prompt Wizard - Frontend JavaScript
-// Updated for Netlify Functions
+// public/script.js
+// Updated for Netlify Functions with individual prompt cards
 
 let videoPromptSystem = null;
 let allToolsSchema = null;
@@ -45,31 +45,46 @@ function addUserMessage(text) {
     messageDiv.className = 'message user-message';
     messageDiv.innerHTML = `<p>${text}</p>`;
     chatMessages.appendChild(messageDiv);
-    chatMessages.scrollHeight;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Add prompt output with copy button
-function addPromptOutput(prompt) {
+// Add multiple prompts with individual copy buttons
+function addPromptsOutput(prompts) {
     const chatMessages = document.getElementById('chatMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message ai-message';
     
-    const promptContainer = document.createElement('div');
-    promptContainer.className = 'prompt-output-container';
+    prompts.forEach((promptData, index) => {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ai-message';
+        
+        const promptContainer = document.createElement('div');
+        promptContainer.className = 'prompt-output-container';
+        
+        // Add prompt title and description
+        const headerDiv = document.createElement('div');
+        headerDiv.style.marginBottom = '12px';
+        headerDiv.innerHTML = `
+            <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 4px;">
+                ${promptData.title || `프롬프트 ${index + 1}`}
+            </div>
+            ${promptData.description ? `<div style="font-size: 13px; color: #B0B0B0;">${promptData.description}</div>` : ''}
+        `;
+        
+        const promptDiv = document.createElement('div');
+        promptDiv.className = 'prompt-output';
+        promptDiv.textContent = promptData.prompt;
+        
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-button';
+        copyButton.textContent = '복사';
+        copyButton.onclick = () => copyPrompt(promptData.prompt, copyButton);
+        
+        promptContainer.appendChild(copyButton);
+        promptContainer.appendChild(headerDiv);
+        promptContainer.appendChild(promptDiv);
+        messageDiv.appendChild(promptContainer);
+        chatMessages.appendChild(messageDiv);
+    });
     
-    const promptDiv = document.createElement('div');
-    promptDiv.className = 'prompt-output';
-    promptDiv.textContent = prompt;
-    
-    const copyButton = document.createElement('button');
-    copyButton.className = 'copy-button';
-    copyButton.textContent = '복사';
-    copyButton.onclick = () => copyPrompt(prompt, copyButton);
-    
-    promptContainer.appendChild(copyButton);
-    promptContainer.appendChild(promptDiv);
-    messageDiv.appendChild(promptContainer);
-    chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
@@ -137,8 +152,18 @@ async function generatePrompt(userMessage, mode = 'creation') {
         const data = await response.json();
         removeLoadingMessage();
         
-        addAIMessage('전문가급 프롬프트가 생성되었습니다! 🎬');
-        addPromptOutput(data.prompt);
+        if (data.prompts && Array.isArray(data.prompts)) {
+            addAIMessage(`${data.prompts.length}개의 전문가급 프롬프트가 생성되었습니다! 🎬`);
+            addPromptsOutput(data.prompts);
+        } else {
+            // Fallback for old format
+            addAIMessage('전문가급 프롬프트가 생성되었습니다! 🎬');
+            addPromptsOutput([{
+                title: "생성된 프롬프트",
+                description: "",
+                prompt: data.prompt || JSON.stringify(data)
+            }]);
+        }
         
     } catch (error) {
         console.error('프롬프트 생성 오류:', error);

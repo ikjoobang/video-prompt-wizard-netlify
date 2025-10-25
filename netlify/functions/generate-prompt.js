@@ -1,146 +1,156 @@
-// Netlify Function: generate-prompt
-// Integrates with Google Gemini API to generate video prompts
+// netlify/functions/generate-prompt.js
+// Updated version with structured prompt output
 
-const fetch = require('node-fetch');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-exports.handler = async (event, context) => {
-  // CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json'
-  };
-
-  // Handle OPTIONS preflight request
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
+exports.handler = async (event) => {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
-  }
 
-  // Only allow POST requests
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
-  try {
-    // Parse request body
-    const { userMessage, mode } = JSON.parse(event.body);
-
-    if (!userMessage) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'userMessage is required' })
-      };
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: headers,
+            body: ''
+        };
     }
 
-    // Google Gemini API keys (try in order)
-    const GEMINI_API_KEYS = [
-      'AIzaSyDYBzxPhdvMKYZD3fiHjtKIynQTmSrOkgM',
-      'AIzaSyCixSH3Wd9IRXpL8HTVXFKfgQQS9_PwwoA'
-    ];
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            headers: headers,
+            body: JSON.stringify({ error: 'Method not allowed' })
+        };
+    }
 
-    // System prompt for video generation
-    const systemPrompt = `You are an expert AI Video Prompt Wizard specializing in creating professional video generation prompts for VEO 3, VEO 3.1, SORA 2, and SORA 2 Pro models.
+    try {
+        const { userMessage, mode = 'creation' } = JSON.parse(event.body);
 
-Your task is to transform user requests into detailed, Hollywood-level video prompts that include all 16 mandatory elements:
-1. OPENING_SEQUENCE (0-2s)
-2. HERO_MOMENT (2-4s)
-3. FEATURE_SHOWCASE (4-6s)
-4. ENVIRONMENT
-5. LIGHTING
-6. CAMERA_WORK
-7. MOTION_GRAPHICS
-8. PARTICLE_EFFECTS
-9. COLOR_PALETTE
-10. TYPOGRAPHY
-11. AUDIO_DESIGN
-12. TRANSITIONS
-13. PACING
-14. PRODUCTION_POLISH
-15. CALL_TO_ACTION (7-8s)
-16. SOCIAL_MEDIA_OPTIMIZATION
-
-Generate prompts in ENGLISH only, as a single paragraph with technical precision and cinematic detail.`;
-
-    let response;
-    let apiKeyUsed;
-
-    // Try each API key until one works
-    for (const apiKey of GEMINI_API_KEYS) {
-      try {
-        const geminiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    {
-                      text: `${systemPrompt}\n\nUser request: ${userMessage}\n\nMode: ${mode || 'creation'}\n\nGenerate a professional video prompt:`
-                    }
-                  ]
-                }
-              ],
-              generationConfig: {
-                temperature: 0.9,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 2048
-              }
-            })
-          }
-        );
-
-        if (geminiResponse.ok) {
-          response = await geminiResponse.json();
-          apiKeyUsed = apiKey;
-          break;
+        if (!userMessage) {
+            return {
+                statusCode: 400,
+                headers: headers,
+                body: JSON.stringify({ error: 'User message is required' })
+            };
         }
-      } catch (err) {
-        console.error(`Failed with API key ${apiKey}:`, err.message);
-        continue;
-      }
+
+        // Try API keys in order
+        const apiKeys = [
+            process.env.GEMINI_API_KEY_1,
+            process.env.GEMINI_API_KEY_2
+        ].filter(Boolean);
+
+        if (apiKeys.length === 0) {
+            throw new Error('No API keys configured');
+        }
+
+        let lastError;
+        for (const apiKey of apiKeys) {
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+                const systemPrompt = `당신은 VEO 3, VEO 3.1, SORA 2, SORA 2 Pro 등 최신 AI 영상 생성 도구를 위한 전문 프롬프트 작성자입니다.
+
+사용자의 요청에 따라 **3개의 다양한 스타일의 프롬프트**를 생성해주세요.
+
+각 프롬프트는 다음 16가지 핵심 요소를 포함해야 합니다:
+1. OPENING_SEQUENCE (0-2s): 강렬한 시작
+2. HERO_MOMENT (2-4s): 핵심 메시지
+3. FEATURE_SHOWCASE (4-6s): 제품/서비스 특징
+4. ENVIRONMENT: 배경 및 분위기
+5. LIGHTING: 조명 설정
+6. CAMERA_WORK: 카메라 움직임
+7. MOTION_GRAPHICS: 모션 그래픽 요소
+8. PARTICLE_EFFECTS: 파티클 효과
+9. COLOR_PALETTE: 색상 팔레트
+10. TYPOGRAPHY: 타이포그래피
+11. AUDIO_DESIGN: 오디오 디자인 (VEO 3 네이티브 오디오)
+12. TRANSITIONS: 전환 효과
+13. PACING: 템포 및 리듬
+14. PRODUCTION_POLISH: 후반 작업
+15. CALL_TO_ACTION: 행동 유도
+16. SOCIAL_MEDIA_OPTIMIZATION: 소셜 미디어 최적화
+
+**중요:** 응답은 반드시 다음 JSON 형식으로 작성하세요:
+
+{
+  "prompts": [
+    {
+      "title": "스타일 1 제목",
+      "description": "이 프롬프트의 특징 설명",
+      "prompt": "전체 프롬프트 텍스트 (16가지 요소 포함)"
+    },
+    {
+      "title": "스타일 2 제목",
+      "description": "이 프롬프트의 특징 설명",
+      "prompt": "전체 프롬프트 텍스트 (16가지 요소 포함)"
+    },
+    {
+      "title": "스타일 3 제목",
+      "description": "이 프롬프트의 특징 설명",
+      "prompt": "전체 프롬프트 텍스트 (16가지 요소 포함)"
     }
+  ]
+}
 
-    if (!response) {
-      throw new Error('All Gemini API keys failed');
+사용자 요청: ${userMessage}`;
+
+                const result = await model.generateContent(systemPrompt);
+                const response = await result.response;
+                let text = response.text();
+
+                // Extract JSON from markdown code blocks if present
+                const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
+                if (jsonMatch) {
+                    text = jsonMatch[1];
+                }
+
+                // Parse JSON response
+                let parsedResponse;
+                try {
+                    parsedResponse = JSON.parse(text);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    // Fallback: create single prompt from text
+                    parsedResponse = {
+                        prompts: [{
+                            title: "생성된 프롬프트",
+                            description: "AI가 생성한 전문가급 프롬프트",
+                            prompt: text
+                        }]
+                    };
+                }
+
+                return {
+                    statusCode: 200,
+                    headers: headers,
+                    body: JSON.stringify(parsedResponse)
+                };
+
+            } catch (error) {
+                console.error(`API key ${apiKey.substring(0, 10)}... failed:`, error);
+                lastError = error;
+                continue;
+            }
+        }
+
+        throw lastError || new Error('All API keys failed');
+
+    } catch (error) {
+        console.error('Generate prompt error:', error);
+        return {
+            statusCode: 500,
+            headers: headers,
+            body: JSON.stringify({ 
+                error: 'Failed to generate prompt',
+                message: error.message 
+            })
+        };
     }
-
-    // Extract generated text
-    const generatedPrompt = response.candidates[0].content.parts[0].text;
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        prompt: generatedPrompt,
-        apiKeyUsed: apiKeyUsed.substring(0, 10) + '...'
-      })
-    };
-
-  } catch (error) {
-    console.error('Error:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Failed to generate prompt',
-        message: error.message
-      })
-    };
-  }
 };
 

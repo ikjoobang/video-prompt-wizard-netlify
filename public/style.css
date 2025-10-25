@@ -17,11 +17,18 @@ body {
 
 /* 컨테이너 */
 .container {
-    max-width: 360px;
-    min-height: 780px;
+    max-width: 800px;
+    min-height: 100vh;
     margin: 0 auto;
-    padding: 16px;
+    padding: 24px;
     background-color: #121212;
+}
+
+@media (max-width: 768px) {
+    .container {
+        max-width: 100%;
+        padding: 16px;
+    }
 }
 
 /* 헤더 */
@@ -202,21 +209,32 @@ body {
 .prompt-output-container {
     position: relative;
     margin-top: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: #1e1e1e;
+    border-radius: 12px;
+    border: 2px solid #2563eb;
 }
 
 .prompt-output {
-    background: #1e1e1e;
-    padding: 16px;
-    border-radius: 8px;
-    border-left: 4px solid #2563eb;
+    background: transparent;
+    padding: 0;
+    padding-top: 40px;
     font-family: 'Courier New', monospace;
     font-size: 13px;
     line-height: 1.6;
     color: #E0E0E0;
     white-space: pre-wrap;
     word-wrap: break-word;
-    max-height: 200px;
+    max-height: 400px;
     overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .prompt-output {
+        font-size: 12px;
+        max-height: 300px;
+    }
 }
 
 /* 복사 버튼 */
@@ -387,6 +405,21 @@ body {
     background: #505050;
 }
 
+/* 채팅 메시지 반응형 */
+@media (max-width: 768px) {
+    .user-message {
+        margin-left: 20px;
+    }
+    
+    .message {
+        padding: 10px 14px;
+    }
+    
+    .message p {
+        font-size: 13px;
+    }
+}
+
 /* 반응형 */
 @media (max-width: 360px) {
     .container {
@@ -394,15 +427,19 @@ body {
     }
     
     .card {
-        padding: 20px;
+        padding: 16px;
     }
     
     .title {
-        font-size: 22px;
+        font-size: 18px;
     }
     
     .card-title {
-        font-size: 18px;
+        font-size: 16px;
+    }
+    
+    .user-message {
+        margin-left: 10px;
     }
 }
 
