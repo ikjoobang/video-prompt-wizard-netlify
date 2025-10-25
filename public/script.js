@@ -119,12 +119,32 @@ async function generatePrompt(userMessage, mode = 'creation') {
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Server error:', errorData);
-            throw new Error(errorData.message || '프롬프트 생성 실패');
+            let errorMessage = '프롬프트 생성 실패';
+            try {
+                const errorData = await response.json();
+                console.error('Server error:', errorData);
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                console.error('Failed to parse error response:', e);
+            }
+            throw new Error(errorMessage);
         }
         
-        const data = await response.json();
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+        
+        if (!responseText) {
+            throw new Error('서버에서 빈 응답을 받았습니다');
+        }
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            console.error('Response text:', responseText);
+            throw new Error('서버 응답을 파싱할 수 없습니다');
+        }
         removeLoadingMessage();
         
         if (data.prompts && Array.isArray(data.prompts)) {
