@@ -54,51 +54,13 @@ exports.handler = async (event) => {
                 const genAI = new GoogleGenerativeAI(apiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-                const systemPrompt = `당신은 VEO 3, VEO 3.1, SORA 2, SORA 2 Pro 등 최신 AI 영상 생성 도구를 위한 전문 프롬프트 작성자입니다.
+                const systemPrompt = `You are a professional video prompt writer. Generate 3 different style video prompts based on user request.
 
-사용자의 요청에 따라 **3개의 다양한 스타일의 프롬프트**를 생성해주세요.
+User request: ${userMessage}
 
-각 프롬프트는 다음 16가지 핵심 요소를 포함해야 합니다:
-1. OPENING_SEQUENCE (0-2s): 강렬한 시작
-2. HERO_MOMENT (2-4s): 핵심 메시지
-3. FEATURE_SHOWCASE (4-6s): 제품/서비스 특징
-4. ENVIRONMENT: 배경 및 분위기
-5. LIGHTING: 조명 설정
-6. CAMERA_WORK: 카메라 움직임
-7. MOTION_GRAPHICS: 모션 그래픽 요소
-8. PARTICLE_EFFECTS: 파티클 효과
-9. COLOR_PALETTE: 색상 팔레트
-10. TYPOGRAPHY: 타이포그래피
-11. AUDIO_DESIGN: 오디오 디자인 (VEO 3 네이티브 오디오)
-12. TRANSITIONS: 전환 효과
-13. PACING: 템포 및 리듬
-14. PRODUCTION_POLISH: 후반 작업
-15. CALL_TO_ACTION: 행동 유도
-16. SOCIAL_MEDIA_OPTIMIZATION: 소셜 미디어 최적화
+IMPORTANT: Respond ONLY with valid JSON in this exact format (no markdown, no code blocks, no extra text):
 
-**중요:** 응답은 반드시 다음 JSON 형식으로 작성하세요:
-
-{
-  "prompts": [
-    {
-      "title": "스타일 1 제목",
-      "description": "이 프롬프트의 특징 설명",
-      "prompt": "전체 프롬프트 텍스트 (16가지 요소 포함)"
-    },
-    {
-      "title": "스타일 2 제목",
-      "description": "이 프롬프트의 특징 설명",
-      "prompt": "전체 프롬프트 텍스트 (16가지 요소 포함)"
-    },
-    {
-      "title": "스타일 3 제목",
-      "description": "이 프롬프트의 특징 설명",
-      "prompt": "전체 프롬프트 텍스트 (16가지 요소 포함)"
-    }
-  ]
-}
-
-사용자 요청: ${userMessage}`;
+{"prompts":[{"title":"Cinematic Style","description":"Professional cinematic approach","prompt":"Your detailed prompt here"},{"title":"Minimal Style","description":"Clean and minimal approach","prompt":"Your detailed prompt here"},{"title":"Dynamic Style","description":"Energetic and dynamic approach","prompt":"Your detailed prompt here"}]}`;
 
                 const result = await model.generateContent(systemPrompt);
                 const response = await result.response;
